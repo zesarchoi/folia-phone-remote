@@ -1,139 +1,204 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Folia Remote (Spotify Search + Player)</title>
+<title>Folia 手机遥控器</title>
 <style>
-*{box-sizing:border-box;font-family:system-ui, sans-serif}
-body{background:#111;color:#fff;padding:20px;max-width:460px;margin:0 auto}
-.card{background:#222;border-radius:16px;padding:20px;margin-bottom:16px}
+*{box-sizing:border-box;font-family:system-ui,sans-serif}
+body{background:#111;color:#fff;padding:16px;max-width:460px;margin:0 auto}
+.card{background:#222;border-radius:16px;padding:18px;margin-bottom:14px}
+.row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+label{font-size:0.8rem;color:#888;display:block;margin-bottom:4px}
+input,select{width:100%;padding:10px;border-radius:10px;border:none;background:#333;color:#fff;font-size:0.95rem}
 .cover{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#333}
-.title{font-size:1.3rem;font-weight:bold;margin:8px 0 4px}
-.artist{color:#aaa;margin-bottom:12px}
+.title{font-size:1.3rem;font-weight:bold;margin:10px 0 4px}
+.artist{color:#aaa;margin-bottom:10px}
 .status{color:#888;font-size:0.9rem}
-.progress{width:100%;height:8px;background:#333;border-radius:999;cursor:pointer;margin:16px 0}
+.progress{width:100%;height:8px;background:#333;border-radius:999;cursor:pointer;margin:14px 0}
 .progress>div{height:100%;background:#6366f1;border-radius:999;width:0%}
 .controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
-button{padding:14px;border:none;border-radius:12px;font-size:1rem;background:#333;color:#fff}
+button{padding:14px;border:none;border-radius:12px;font-size:1rem;background:#333;color:#fff;cursor:pointer}
 button:active{background:#444}
-.search-row{display:flex;gap:8px;margin-bottom:16px}
-#searchInput{flex:1;padding:12px;border-radius:12px;border:none;background:#222;color:#fff;font-size:1rem}
-#searchBtn{padding:12px;background:#444}
+button:disabled{opacity:.4}
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+#searchInput{flex:1;background:#333}
+#searchBtn{width:auto;padding:10px 14px;background:#444}
 .result-item{padding:12px;border-bottom:1px solid #333;cursor:pointer}
 .result-item:active{background:#333}
+.hint{font-size:0.75rem;color:#777;line-height:1.6;margin-top:6px}
+#connMsg{color:#f87171;font-size:0.85rem;margin-top:8px}
+.btn-main{background:#6366f1}
 </style>
 </head>
 <body>
 
 <div class="card">
+  <div class="row">
+    <div style="flex:2"><label>Folia 地址（PC 本机: 127.0.0.1:32107；手机: 你PC的IP:32107）</label><input id="host" placeholder="127.0.0.1:32107"></div>
+  </div>
+  <div class="row">
+    <div style="flex:2"><label>Stage Bearer Token（在 Folia 设置→舞台模式→Bearer Token 里复制）</label><input id="token" placeholder="粘贴 token"></div>
+  </div>
+  <button class="btn-main" onclick="saveCfg();connect()">连接</button>
+  <div id="connMsg"></div>
+</div>
+
+<div class="card">
   <img id="cover" class="cover">
   <div class="title" id="title">—</div>
-  <div class="artist" id="artist">Waiting for Folia...</div>
+  <div class="artist" id="artist">未连接 / 无播放</div>
   <div class="status" id="timeText">00:00 / 00:00</div>
-  <div class="progress" id="progressBar"><div id="progressFill"></div></div>
+  <div class="progress" id="bar" onclick="seekOnBar(event)"><div id="fill"></div></div>
   <div class="controls">
-    <button onclick="sendCmd('prev')">⏮ Prev</button>
-    <button onclick="sendCmd('toggle')">⏯ Play/Pause</button>
-    <button onclick="sendCmd('next')">Next ⏭</button>
+    <button id="btnPrev" onclick="sendCmd('prev')">⏮ 上一首</button>
+    <button id="btnToggle" onclick="togglePlay()">⏯ 播放/暂停</button>
+    <button id="btnNext" onclick="sendCmd('next')">⏭ 下一首</button>
   </div>
 </div>
 
 <div class="card">
   <div class="search-row">
-    <input id="searchInput" placeholder="Search Spotify / songs..." onkeydown="if(event.key==='Enter')doSearch()">
+    <input id="searchInput" placeholder="搜歌（Folia 的搜索源，默认网易云）" onkeydown="if(event.key==='Enter')doSearch()">
     <button id="searchBtn" onclick="doSearch()">🔍</button>
   </div>
   <div id="results"></div>
+  <div class="hint">点结果直接播放（走 Folia 内部播放器）。</div>
 </div>
 
 <script>
-// ========= CONFIG: CHANGE TO YOUR PC LAN IP =========
-const FOLIA_HOST = "192.168.1.100:9863";
-// =====================================================
+let cfg = { host: "127.0.0.1:32107", token: "" };
+let st = {};
+let polling = null;
 
-let status = {};
+function saveCfg(){
+  cfg.host = (document.getElementById("host").value||"").trim() || "127.0.0.1:32107";
+  cfg.token = (document.getElementById("token").value||"").trim();
+  localStorage.setItem("folia_remote", JSON.stringify(cfg));
+}
+function loadCfg(){
+  try{ const s = JSON.parse(localStorage.getItem("folia_remote")); if(s){ cfg = Object.assign(cfg, s); } }catch(e){}
+  document.getElementById("host").value = cfg.host;
+  document.getElementById("token").value = cfg.token;
+}
+function base(){ return "http://" + cfg.host; }
+function headers(){
+  const h = { "Content-Type":"application/json" };
+  if(cfg.token) h["Authorization"] = "Bearer " + cfg.token;
+  return h;
+}
 
-async function fetchStatus(){
+function setMsg(m){ document.getElementById("connMsg").innerText = m || ""; }
+
+async function connect(){
+  saveCfg();
+  setMsg("连接中...");
   try{
-    const r = await fetch(`http://${FOLIA_HOST}/stage/player/status`);
-    status = await r.json();
-    renderPlayer();
+    const r = await fetch(base() + "/stage/player/status", { headers: headers() });
+    if(r.status === 401){ setMsg("✗ 令牌错误（401）——检查 token 是否粘贴正确"); return; }
+    if(r.status === 503){ setMsg("✗ 舞台模式未启用（503）——请在 Folia 打开「舞台模式」"); return; }
+    if(!r.ok){ setMsg("✗ HTTP " + r.status); return; }
+    st = await r.json();
+    setMsg("✓ 已连接");
+    render();
+    if(polling) clearInterval(polling);
+    polling = setInterval(poll, 1200);
   }catch(e){
-    document.getElementById("artist").innerText = "Cannot connect | Turn ON Stage Mode in Folia";
+    setMsg("✗ 无法连接——检查地址/端口，手机需同一 Wi-Fi 且防火墙放行 32107");
   }
 }
 
+async function poll(){
+  try{
+    const r = await fetch(base() + "/stage/player/status", { headers: headers() });
+    if(!r.ok) return;
+    st = await r.json();
+    render();
+  }catch(e){ /* keep old state */ }
+}
+
+function render(){
+  const c = st.current || null;
+  document.getElementById("title").innerText = c?.title || "—";
+  document.getElementById("artist").innerText = c ? ((c.artist||"") + (c.album? " · " + c.album : "")) : "无播放";
+  if(c?.coverUrl) document.getElementById("cover").src = c.coverUrl;
+  const pos = st.positionMs ?? 0, dur = st.durationMs ?? 1;
+  const pct = Math.min(pos/dur*100, 100);
+  document.getElementById("fill").style.width = pct + "%";
+  document.getElementById("timeText").innerText = fmt(pos) + " / " + fmt(dur);
+  const playing = st.playerState === "PLAYING";
+  document.getElementById("btnToggle").innerText = playing ? "⏸ 暂停" : "▶ 播放";
+}
+
+function fmt(ms){
+  const s = Math.floor((ms||0)/1000);
+  return String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
+}
+
 async function sendCmd(action){
-  let act = action === "toggle" ? (status.playing ? "pause" : "resume") : action;
-  await fetch(`http://${FOLIA_HOST}/stage/player/control`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({action:act})
-  });
-  fetchStatus();
+  try{
+    await fetch(base() + "/stage/player/control", {
+      method:"POST", headers: headers(),
+      body: JSON.stringify({ action: action })
+    });
+    poll();
+  }catch(e){ setMsg("✗ 控制失败：" + e.message); }
+}
+
+function togglePlay(){
+  sendCmd(st.playerState === "PLAYING" ? "pause" : "resume");
+}
+
+async function seekOnBar(e){
+  const rect = e.currentTarget.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  const ms = Math.round((st.durationMs||0) * ratio);
+  try{
+    await fetch(base() + "/stage/player/control", {
+      method:"POST", headers: headers(),
+      body: JSON.stringify({ action:"seek", positionMs: ms })
+    });
+    poll();
+  }catch(err){ setMsg("✗ 跳转失败"); }
 }
 
 async function doSearch(){
   const q = document.getElementById("searchInput").value.trim();
   if(!q) return;
   const resEl = document.getElementById("results");
-  resEl.innerHTML = "<div style='padding:8px'>Searching...</div>";
+  resEl.innerHTML = "<div style='padding:8px;color:#888'>搜索中...</div>";
   try{
-    const r = await fetch(`http://${FOLIA_HOST}/stage/player/search`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({query: q})
+    const r = await fetch(base() + "/stage/player/search", {
+      method:"POST", headers: headers(),
+      body: JSON.stringify({ query: q, limit: 10 })
     });
+    if(r.status === 401){ resEl.innerHTML = "<div style='padding:8px;color:#f87171'>令牌错误 401</div>"; return; }
+    if(!r.ok){ resEl.innerHTML = "<div style='padding:8px;color:#f87171'>搜索失败 HTTP " + r.status + "</div>"; return; }
     const data = await r.json();
+    const songs = data.songs || [];
     resEl.innerHTML = "";
-    if(!data?.list?.length){
-      resEl.innerHTML = "<div style='padding:8px'>No results</div>";
-      return;
-    }
-    for(const item of data.list){
-      const div = document.createElement("div");
-      div.className = "result-item";
-      div.innerText = `${item.title} — ${item.artist || ''}`;
-      div.onclick = async ()=>{
-        await fetch(`http://${FOLIA_HOST}/stage/player/play`,{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({
-            sourceId: item.sourceId,
-            trackId: item.trackId
-          })
-        });
-        fetchStatus();
+    if(!songs.length){ resEl.innerHTML = "<div style='padding:8px;color:#888'>无结果</div>"; return; }
+    for(const s of songs){
+      const d = document.createElement("div");
+      d.className = "result-item";
+      d.innerText = (s.title||"") + " — " + ((s.artists||[]).join(", ") || "");
+      d.onclick = async () => {
+        try{
+          await fetch(base() + "/stage/player/play", {
+            method:"POST", headers: headers(),
+            body: JSON.stringify({ songId: s.songId, appendToQueue: false })
+          });
+          poll();
+        }catch(e){ setMsg("✗ 播放失败：" + e.message); }
       };
-      resEl.appendChild(div);
+      resEl.appendChild(d);
     }
   }catch(e){
-    resEl.innerHTML = "<div style='padding:8px'>Search failed, check Stage API</div>";
+    resEl.innerHTML = "<div style='padding:8px;color:#f87171'>搜索失败：" + e.message + "</div>";
   }
 }
 
-function renderPlayer(){
-  const s = status;
-  document.getElementById("title").innerText = s.track?.title || "No track";
-  document.getElementById("artist").innerText = s.track?.artist || "";
-  if(s.track?.coverUrl) document.getElementById("cover").src = s.track.coverUrl;
-  const pos = s.positionMs ?? 0;
-  const dur = s.durationMs ?? 1;
-  const pct = Math.min(pos/dur*100,100);
-  document.getElementById("progressFill").style.width = pct+"%";
-  document.getElementById("timeText").innerText = fmt(pos)+" / "+fmt(dur);
-}
-
-function fmt(ms){
-  const s = Math.floor(ms/1000);
-  const m = String(Math.floor(s/60)).padStart(2,"0");
-  const sec = String(s%60).padStart(2,"0");
-  return m+":"+sec;
-}
-
-setInterval(fetchStatus, 1200);
-fetchStatus();
+loadCfg();
 </script>
 </body>
 </html>
