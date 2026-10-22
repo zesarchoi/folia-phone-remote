@@ -3,121 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Folia 手机遥控器</title>
+<title>Folia 遥控器</title>
 <style>
 *{box-sizing:border-box;font-family:system-ui,sans-serif}
-body{background:#111;color:#fff;padding:16px;max-width:460px;margin:0 auto}
-.card{background:#222;border-radius:16px;padding:18px;margin-bottom:14px}
-.row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
-label{font-size:0.8rem;color:#888;display:block;margin-bottom:4px}
-input{width:100%;padding:10px;border-radius:10px;border:none;background:#333;color:#fff;font-size:0.95rem}
-.cover{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;background:#333}
-.title{font-size:1.3rem;font-weight:bold;margin:10px 0 4px}
-.artist{color:#aaa;margin-bottom:10px}
-.status{color:#888;font-size:0.9rem}
-.progress{width:100%;height:8px;background:#333;border-radius:999;cursor:pointer;margin:14px 0}
-.progress>div{height:100%;background:#6366f1;border-radius:999;width:0%}
-.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
-button{padding:14px;border:none;border-radius:12px;font-size:1rem;background:#333;color:#fff;cursor:pointer}
-button:active{background:#444}
-button:disabled{opacity:.35}
-.search-row{display:flex;gap:8px;margin-bottom:12px}
-#searchInput{flex:1;background:#333}
-#searchBtn{width:auto;padding:10px 14px;background:#444}
-.result-item{padding:12px;border-bottom:1px solid #333;cursor:pointer}
-.result-item:active{background:#333}
-.hint{font-size:0.75rem;color:#777;line-height:1.6;margin-top:6px}
-#connMsg{color:#f87171;font-size:0.85rem;margin-top:8px}
+body{background:#0e0e14;color:#fff;padding:0;margin:0;min-height:100vh}
+.view{display:none;padding:16px;max-width:460px;margin:0 auto}
+.view.active{display:block}
+
+/* ---------- 登录页 ---------- */
+#loginView{min-height:100vh;display:none;flex-direction:column;justify-content:center;align-items:center;padding:24px}
+#loginView.active{display:flex}
+.login-card{background:#1b1b26;border-radius:20px;padding:32px 24px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.login-logo{font-size:2.2rem;font-weight:800;text-align:center;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px}
+.login-sub{text-align:center;color:#8a8aa3;font-size:.9rem;margin-bottom:26px}
+label{font-size:.78rem;color:#8a8aa3;display:block;margin:16px 0 6px}
+input{width:100%;padding:13px;border-radius:12px;border:1px solid #2c2c3a;background:#232331;color:#fff;font-size:1rem;outline:none}
+input:focus{border-color:#6366f1}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;margin-top:22px}
+.btn-main{background:#6366f1;color:#fff}
+.btn-main:active{background:#5355d9}
+.btn-ghost{background:#2a2a38;color:#fff}
+#connMsg{font-size:.85rem;margin-top:14px;min-height:1.2em;color:#f87171;text-align:center}
 #connMsg.ok{color:#4ade80}
-.btn-main{background:#6366f1}
-.qitem{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid #2b2b2b}
-.qitem.cur{background:#1e1e2f;border-radius:10px}
-.qmeta{flex:1;min-width:0}
-.qtitle{font-size:0.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qart{font-size:0.75rem;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.qbtn{background:#333;padding:8px 10px;font-size:0.8rem;border-radius:9px;flex:none}
-.qbtn:disabled{opacity:.3}
+.mono{font-family:ui-monospace,Consolas,monospace}
+
+/* ---------- 播放器页 ---------- */
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 2px 10px}
+.topbar .brand{font-weight:700;font-size:1.05rem}
+.topbar .right{display:flex;align-items:center;gap:12px}
+.hostbadge{font-size:.72rem;color:#8a8aa3}
+.gear{background:#232331;border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:1.1rem;cursor:pointer;flex:none}
+.gear:active{background:#333}
+
+.card{background:#1b1b26;border-radius:18px;padding:18px;margin-bottom:14px}
+.cover{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:14px;background:#232331}
+.title{font-size:1.35rem;font-weight:700;margin:12px 0 4px}
+.artist{color:#9a9ab2;margin-bottom:8px}
+.time{display:flex;justify-content:space-between;font-size:.8rem;color:#8a8aa3;margin-top:6px}
+.progress{width:100%;height:6px;background:#2a2a38;border-radius:999;cursor:pointer;margin-top:6px}
+.progress>div{height:100%;background:#6366f1;border-radius:999;width:0%}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+.ctrl{width:100%;padding:16px;border:none;border-radius:14px;background:#232331;color:#fff;font-size:1.15rem;cursor:pointer}
+.ctrl:active{background:#333}
+.ctrl:disabled{opacity:.3}
+
 .qhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.qcount{font-size:0.8rem;color:#888}
+.qcount{font-size:.8rem;color:#8a8aa3}
+.qitem{display:flex;align-items:center;gap:8px;padding:9px 6px;border-bottom:1px solid #24242f}
+.qitem.cur{background:#23233a;border-radius:10px}
+.qmeta{flex:1;min-width:0}
+.qtitle{font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qart{font-size:.74rem;color:#8a8aa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qbtn{background:#2a2a38;border:none;color:#fff;padding:8px 11px;font-size:.8rem;border-radius:9px;cursor:pointer;flex:none}
+.qbtn:disabled{opacity:.3}
+
+.search-row{display:flex;gap:8px;margin-bottom:12px}
+#searchInput{flex:1;border-radius:12px}
+#searchBtn{width:auto;padding:0 18px;border:none;border-radius:12px;background:#444;color:#fff;font-size:1rem;cursor:pointer}
+.result-item{display:flex;align-items:center;gap:8px;padding:11px 4px;border-bottom:1px solid #24242f}
+.result-item .rmeta{flex:1;min-width:0}
+.result-item .rtitle{font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-item .rart{font-size:.74rem;color:#8a8aa3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rb{background:#2a2a38;border:none;color:#fff;padding:8px 11px;border-radius:9px;cursor:pointer;flex:none}
+.hint{font-size:.74rem;color:#76768e;line-height:1.6;margin-top:6px}
 </style>
 </head>
 <body>
 
-<div class="card">
-  <div class="row">
-    <div style="flex:2"><label>Folia 地址（PC: 127.0.0.1:32107；手机: 你PC的IP:32107）</label><input id="host" placeholder="127.0.0.1:32107"></div>
-  </div>
-  <div class="row">
-    <div style="flex:2"><label>Stage Bearer Token（Folia 设置→舞台模式里复制）</label><input id="token" placeholder="粘贴 token"></div>
-  </div>
-  <button class="btn-main" onclick="connect()">连接</button>
-  <div id="connMsg"></div>
-</div>
-
-<div class="card">
-  <img id="cover" class="cover">
-  <div class="title" id="title">—</div>
-  <div class="artist" id="artist">未连接 / 无播放</div>
-  <div class="status" id="timeText">00:00 / 00:00</div>
-  <div class="progress" id="bar" onclick="seekOnBar(event)"><div id="fill"></div></div>
-  <div class="controls">
-    <button id="btnPrev" onclick="sendCmd('prev')">⏮</button>
-    <button id="btnToggle" onclick="togglePlay()">⏯</button>
-    <button id="btnNext" onclick="sendCmd('next')">⏭</button>
+<!-- ================= 登录页 ================= -->
+<div id="loginView" class="view active">
+  <div class="login-card">
+    <div class="login-logo">♫ Folia</div>
+    <div class="login-sub">手机遥控桌面端 Folia</div>
+    <label>Folia 地址</label>
+    <input class="mono" id="host" placeholder="PC: 127.0.0.1:32107　手机: 你PC的IP:32107" autocomplete="off">
+    <label>Stage Token（Folia 设置→舞台模式里复制）</label>
+    <input class="mono" id="token" placeholder="粘贴 token" autocomplete="off">
+    <button class="btn btn-main" onclick="connect()">连接</button>
+    <div id="connMsg"></div>
+    <div class="hint" style="text-align:center">地址与 token 会自动保存在本机浏览器</div>
   </div>
 </div>
 
-<div class="card">
-  <div class="qhead">
-    <b>播放队列</b>
-    <span class="qcount" id="qcount">0 首</span>
+<!-- ================= 播放器页 ================= -->
+<div id="playerView" class="view">
+  <div class="topbar">
+    <div class="brand">♫ Folia 遥控器</div>
+    <div class="right">
+      <span class="hostbadge mono" id="hostBadge"></span>
+      <button class="gear" onclick="disconnect()" title="返回设置">⚙</button>
+    </div>
   </div>
-  <div id="qlist"><div class="hint">连接后显示队列。未播放时为空。</div></div>
-  <div class="row" style="margin-top:10px">
-    <button style="flex:1" onclick="qAction('clear')">清空队列</button>
-  </div>
-</div>
 
-<div class="card">
-  <div class="search-row">
-    <input id="searchInput" placeholder="搜歌（Folia 搜索源，默认网易云）" onkeydown="if(event.key==='Enter')doSearch()">
-    <button id="searchBtn" onclick="doSearch()">🔍</button>
+  <div class="card">
+    <img id="cover" class="cover">
+    <div class="title" id="title">—</div>
+    <div class="artist" id="artist">—</div>
+    <div class="time"><span id="timeNow">00:00</span><span id="timeDur">00:00</span></div>
+    <div class="progress" id="bar" onclick="seekOnBar(event)"><div id="fill"></div></div>
+    <div class="controls">
+      <button class="ctrl" id="btnPrev" onclick="sendCmd('prev')">⏮</button>
+      <button class="ctrl" id="btnToggle" onclick="togglePlay()">⏯</button>
+      <button class="ctrl" id="btnNext" onclick="sendCmd('next')">⏭</button>
+    </div>
   </div>
-  <div id="results"></div>
-  <div class="hint">点结果直接播放；点「＋」插入下一首。</div>
+
+  <div class="card">
+    <div class="qhead"><b>播放队列</b><span class="qcount" id="qcount">0 首</span></div>
+    <div id="qlist"><div class="hint">连接后显示队列。</div></div>
+    <div style="margin-top:10px"><button class="btn btn-ghost" onclick="qAction('clear')">清空队列</button></div>
+  </div>
+
+  <div class="card">
+    <div class="search-row">
+      <input id="searchInput" placeholder="搜歌（默认网易云源）" onkeydown="if(event.key==='Enter')doSearch()">
+      <button id="searchBtn" onclick="doSearch()">🔍</button>
+    </div>
+    <div id="results"></div>
+    <div class="hint">结果点「▶」立即播放，「＋」插入下一首。</div>
+  </div>
 </div>
 
 <script>
 let cfg = { host: "127.0.0.1:32107", token: "" };
 let st = { playerState:"IDLE", positionMs:0, durationMs:0, current:null, controlCapabilities:{}, queueCapabilities:{} };
 let queue = { items:[], currentIndex:-1, length:0 };
-let ws = null;
-let reconnectTimer = null;
-let statusTimer = null;
+let ws = null, reconnectTimer = null, statusTimer = null;
 
-function saveCfg(){
-  cfg.host = (document.getElementById("host").value||"").trim() || "127.0.0.1:32107";
-  cfg.token = (document.getElementById("token").value||"").trim();
-  localStorage.setItem("folia_remote", JSON.stringify(cfg));
-}
-function loadCfg(){
-  try{ const s = JSON.parse(localStorage.getItem("folia_remote")); if(s){ cfg = Object.assign(cfg, s); } }catch(e){}
-  document.getElementById("host").value = cfg.host;
-  document.getElementById("token").value = cfg.token;
-}
+function $(id){ return document.getElementById(id); }
+function saveCfg(){ cfg.host = $("host").value.trim() || "127.0.0.1:32107"; cfg.token = $("token").value.trim(); localStorage.setItem("folia_remote", JSON.stringify(cfg)); }
+function loadCfg(){ try{ const s = JSON.parse(localStorage.getItem("folia_remote")); if(s) cfg = Object.assign(cfg, s); }catch(e){} $("host").value = cfg.host; $("token").value = cfg.token; }
 function base(){ return "http://" + cfg.host; }
 function wsUrl(){ return "ws://" + cfg.host + "/stage/player/ws?token=" + encodeURIComponent(cfg.token); }
-function headers(){
-  const h = { "Content-Type":"application/json" };
-  if(cfg.token) h["Authorization"] = "Bearer " + cfg.token;
-  return h;
-}
-function setMsg(m, ok){
-  const el = document.getElementById("connMsg");
-  el.innerText = m || "";
-  el.className = ok ? "ok" : "";
-}
+function headers(){ const h = { "Content-Type":"application/json" }; if(cfg.token) h["Authorization"] = "Bearer " + cfg.token; return h; }
+function setMsg(m, ok){ const el = $("connMsg"); el.innerText = m || ""; el.className = ok ? "ok" : ""; }
 function fmt(ms){ const s=Math.floor((ms||0)/1000); return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0"); }
+function showView(v){ document.querySelectorAll(".view").forEach(x=>x.classList.remove("active")); $(v).classList.add("active"); }
 
 async function connect(){
   saveCfg();
@@ -129,7 +150,8 @@ async function connect(){
     if(r.status === 503){ setMsg("✗ 舞台模式未启用（503）——请打开「舞台模式」"); return; }
     if(!r.ok){ setMsg("✗ HTTP " + r.status); return; }
     st = Object.assign({playerState:"IDLE",positionMs:0,durationMs:0,current:null,controlCapabilities:{},queueCapabilities:{}}, await r.json());
-    setMsg("✓ 已连接（实时模式）", true);
+    $("hostBadge").innerText = cfg.host;
+    showView("playerView");
     openWS();
     refreshQueue();
     if(statusTimer) clearInterval(statusTimer);
@@ -140,61 +162,56 @@ async function connect(){
   }
 }
 
+function disconnect(){
+  closeAll();
+  showView("loginView");
+  setMsg("已断开");
+}
+
 function closeAll(){
-  if(ws) { try{ ws.close(); }catch(e){} ws = null; }
+  if(ws){ try{ ws.close(); }catch(e){} ws = null; }
   if(reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if(statusTimer){ clearInterval(statusTimer); statusTimer = null; }
 }
 
 function openWS(){
   try {
     ws = new WebSocket(wsUrl());
-    ws.onopen = () => { setMsg("✓ 已连接（实时模式）", true); };
-    ws.onmessage = (ev) => {
-      try { handleWS(JSON.parse(ev.data)); } catch(e){}
-    };
+    ws.onmessage = (ev) => { try { handleWS(JSON.parse(ev.data)); } catch(e){} };
     ws.onerror = () => {};
-    ws.onclose = () => {
-      ws = null;
-      setMsg("连接已断开，正在重连...");
-      if(!reconnectTimer) reconnectTimer = setTimeout(() => { reconnectTimer = null; openWS(); refreshQueue(); }, 2500);
-    };
-  } catch(e){ setMsg("✗ WebSocket 建立失败"); }
+    ws.onclose = () => { ws = null; if(!reconnectTimer) reconnectTimer = setTimeout(() => { reconnectTimer = null; openWS(); refreshQueue(); }, 2500); };
+  } catch(e){}
 }
 
 function handleWS(msg){
   const ev = msg.event;
-  if(ev === "STATUS"){ st = Object.assign(st, pickSnapshot(msg)); }
-  else if(ev === "TRACK_CHANGED"){ st.current = msg.current; st.playerState = msg.playerState; st.controlCapabilities = msg.controlCapabilities||{}; st.queueCapabilities = msg.queueCapabilities||{}; st.queue = msg.queue; }
+  if(ev === "STATUS") st = Object.assign(st, pick(msg));
+  else if(ev === "TRACK_CHANGED"){ st.current = msg.current; st.playerState = msg.playerState; st.controlCapabilities = msg.controlCapabilities||{}; st.queueCapabilities = msg.queueCapabilities||{}; }
   else if(ev === "PLAYBACK_UPDATED"){ st.playerState = msg.playerState; st.positionMs = msg.positionMs; st.durationMs = msg.durationMs; }
-  else if(ev === "QUEUE_UPDATED"){ st.queue = msg.queue; st.queueCapabilities = msg.queueCapabilities||{}; }
+  else if(ev === "QUEUE_UPDATED"){ st.queueCapabilities = msg.queueCapabilities||{}; }
   render();
-  if(ev === "STATUS" || ev === "TRACK_CHANGED" || ev === "QUEUE_UPDATED"){ refreshQueue(); }
+  if(ev === "STATUS" || ev === "TRACK_CHANGED" || ev === "QUEUE_UPDATED") refreshQueue();
 }
-function pickSnapshot(s){ return { current:s.current, playerState:s.playerState, positionMs:s.positionMs, durationMs:s.durationMs, controlCapabilities:s.controlCapabilities, queueCapabilities:s.queueCapabilities, queue:s.queue }; }
+function pick(s){ return { current:s.current, playerState:s.playerState, positionMs:s.positionMs, durationMs:s.durationMs, controlCapabilities:s.controlCapabilities, queueCapabilities:s.queueCapabilities }; }
 
 async function fallbackPoll(){
   if(ws && ws.readyState === 1) return;
-  try {
-    const r = await fetch(base() + "/stage/player/status", { headers: headers() });
-    if(!r.ok) return;
-    st = Object.assign(st, pickSnapshot(await r.json()));
-    render();
-  } catch(e){}
+  try { const r = await fetch(base() + "/stage/player/status", { headers: headers() }); if(r.ok) st = Object.assign(st, pick(await r.json())); render(); } catch(e){}
 }
 
 function render(){
   const c = st.current || null;
-  document.getElementById("title").innerText = c?.title || "—";
-  document.getElementById("artist").innerText = c ? ((c.artist||"") + (c.album? " · " + c.album : "")) : "无播放";
-  if(c?.coverUrl) document.getElementById("cover").src = c.coverUrl;
+  $("title").innerText = c?.title || "—";
+  $("artist").innerText = c ? ((c.artist||"") + (c.album ? " · " + c.album : "")) : "—";
+  if(c?.coverUrl) $("cover").src = c.coverUrl;
   const pos = st.positionMs ?? 0, dur = st.durationMs ?? 1;
-  document.getElementById("fill").style.width = Math.min(pos/dur*100,100) + "%";
-  document.getElementById("timeText").innerText = fmt(pos) + " / " + fmt(dur);
+  $("fill").style.width = Math.min(pos/dur*100,100) + "%";
+  $("timeNow").innerText = fmt(pos); $("timeDur").innerText = fmt(dur);
   const playing = st.playerState === "PLAYING";
-  document.getElementById("btnToggle").innerText = playing ? "⏸" : "▶";
-  document.getElementById("btnToggle").disabled = !(st.controlCapabilities?.pause || st.controlCapabilities?.resume);
-  document.getElementById("btnPrev").disabled = !st.controlCapabilities?.previous;
-  document.getElementById("btnNext").disabled = !st.controlCapabilities?.next;
+  $("btnToggle").innerText = playing ? "⏸" : "▶";
+  $("btnToggle").disabled = !(st.controlCapabilities?.pause || st.controlCapabilities?.resume);
+  $("btnPrev").disabled = !st.controlCapabilities?.previous;
+  $("btnNext").disabled = !st.controlCapabilities?.next;
 }
 
 async function refreshQueue(){
@@ -208,14 +225,12 @@ async function refreshQueue(){
     renderQueue();
   } catch(e){}
 }
-
 function renderQueue(){
-  const el = document.getElementById("qlist");
-  document.getElementById("qcount").innerText = queue.length + " 首";
-  if(!queue.items.length){ el.innerHTML = '<div class="hint">队列为空。</div>'; return; }
+  $("qcount").innerText = queue.length + " 首";
+  if(!queue.items.length){ $("qlist").innerHTML = '<div class="hint">队列为空。</div>'; return; }
   const cap = st.queueCapabilities || {};
   let html = "";
-  queue.items.forEach((it, i) => {
+  queue.items.forEach((it,i)=>{
     const cur = i === queue.currentIndex ? " cur" : "";
     html += `<div class="qitem${cur}">
       <div class="qmeta"><div class="qtitle">${esc(it.title||"")}</div><div class="qart">${esc(it.artist||"")}</div></div>
@@ -224,70 +239,50 @@ function renderQueue(){
       ${cap.remove ? `<button class="qbtn" onclick="qAction('remove','${escAttr(it.queueItemId)}')">✕</button>` : ""}
     </div>`;
   });
-  el.innerHTML = html;
+  $("qlist").innerHTML = html;
 }
 function esc(s){ return (s||"").replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
 function escAttr(s){ return esc(s).replace(/'/g, "&#39;"); }
 
 async function qAction(action, queueItemId){
-  try {
-    const body = { action };
-    if(queueItemId) body.queueItemId = queueItemId;
-    await fetch(base() + "/stage/player/queue", { method:"POST", headers: headers(), body: JSON.stringify(body) });
-    refreshQueue();
-  } catch(e){ setMsg("✗ 队列操作失败"); }
+  try { const body = { action }; if(queueItemId) body.queueItemId = queueItemId; await fetch(base() + "/stage/player/queue", { method:"POST", headers: headers(), body: JSON.stringify(body) }); refreshQueue(); } catch(e){}
 }
 async function qMove(from, to){
-  try {
-    await fetch(base() + "/stage/player/queue", { method:"POST", headers: headers(), body: JSON.stringify({ action:"move", fromIndex: from, toIndex: to }) });
-    refreshQueue();
-  } catch(e){ setMsg("✗ 移动失败"); }
+  try { await fetch(base() + "/stage/player/queue", { method:"POST", headers: headers(), body: JSON.stringify({ action:"move", fromIndex: from, toIndex: to }) }); refreshQueue(); } catch(e){}
 }
-
 async function sendCmd(action){
-  try {
-    await fetch(base() + "/stage/player/control", { method:"POST", headers: headers(), body: JSON.stringify({ action }) });
-  } catch(e){ setMsg("✗ 控制失败：" + e.message); }
+  try { await fetch(base() + "/stage/player/control", { method:"POST", headers: headers(), body: JSON.stringify({ action }) }); } catch(e){}
 }
 function togglePlay(){ sendCmd(st.playerState === "PLAYING" ? "pause" : "resume"); }
 async function seekOnBar(e){
   const rect = e.currentTarget.getBoundingClientRect();
-  const ratio = (e.clientX - rect.left) / rect.width;
-  const ms = Math.round((st.durationMs||0) * ratio);
-  try { await fetch(base() + "/stage/player/control", { method:"POST", headers: headers(), body: JSON.stringify({ action:"seek", positionMs: ms }) }); } catch(err){ setMsg("✗ 跳转失败"); }
+  const ms = Math.round((st.durationMs||0) * ((e.clientX - rect.left) / rect.width));
+  try { await fetch(base() + "/stage/player/control", { method:"POST", headers: headers(), body: JSON.stringify({ action:"seek", positionMs: ms }) }); } catch(err){}
 }
 
 async function doSearch(){
-  const q = document.getElementById("searchInput").value.trim();
-  if(!q) return;
-  const resEl = document.getElementById("results");
-  resEl.innerHTML = "<div style='padding:8px;color:#888'>搜索中...</div>";
+  const q = $("searchInput").value.trim(); if(!q) return;
+  const resEl = $("results"); resEl.innerHTML = "<div style='padding:8px;color:#76768e'>搜索中...</div>";
   try {
     const r = await fetch(base() + "/stage/player/search", { method:"POST", headers: headers(), body: JSON.stringify({ query: q, limit: 10 }) });
     if(r.status === 401){ resEl.innerHTML = "<div style='padding:8px;color:#f87171'>令牌错误 401</div>"; return; }
     if(!r.ok){ resEl.innerHTML = "<div style='padding:8px;color:#f87171'>搜索失败 HTTP " + r.status + "</div>"; return; }
     const songs = (await r.json()).songs || [];
     resEl.innerHTML = "";
-    if(!songs.length){ resEl.innerHTML = "<div style='padding:8px;color:#888'>无结果</div>"; return; }
+    if(!songs.length){ resEl.innerHTML = "<div style='padding:8px;color:#76768e'>无结果</div>"; return; }
     for(const s of songs){
-      const d = document.createElement("div");
-      d.className = "result-item";
-      const meta = document.createElement("span");
-      meta.style.flex = "1";
-      meta.innerText = (s.title||"") + " — " + ((s.artists||[]).join(", ")||"");
-      const play = document.createElement("button");
-      play.innerText = "▶"; play.style.width="auto"; play.style.padding="6px 10px"; play.style.marginRight="8px";
-      play.onclick = async () => { await playSong(s.songId, false); };
-      const ins = document.createElement("button");
-      ins.innerText = "＋"; ins.style.width="auto"; ins.style.padding="6px 10px";
-      ins.onclick = async () => { await playSong(s.songId, true); };
+      const d = document.createElement("div"); d.className = "result-item";
+      const meta = document.createElement("div"); meta.className = "rmeta";
+      meta.innerHTML = `<div class="rtitle">${esc(s.title||"")}</div><div class="rart">${esc((s.artists||[]).join(", ")||"")}</div>`;
+      const play = document.createElement("button"); play.className="rb"; play.innerText="▶"; play.onclick = async()=>{ await playSong(s.songId,false); };
+      const ins = document.createElement("button"); ins.className="rb"; ins.innerText="＋"; ins.onclick = async()=>{ await playSong(s.songId,true); };
       d.appendChild(play); d.appendChild(ins); d.appendChild(meta);
       resEl.appendChild(d);
     }
-  } catch(e){ resEl.innerHTML = "<div style='padding:8px;color:#f87171'>搜索失败：" + e.message + "</div>"; }
+  } catch(e){ resEl.innerHTML = "<div style='padding:8px;color:#f87171'>搜索失败</div>"; }
 }
 async function playSong(songId, append){
-  try { await fetch(base() + "/stage/player/play", { method:"POST", headers: headers(), body: JSON.stringify({ songId, appendToQueue: append }) }); refreshQueue(); } catch(e){ setMsg("✗ 播放失败"); }
+  try { await fetch(base() + "/stage/player/play", { method:"POST", headers: headers(), body: JSON.stringify({ songId, appendToQueue: append }) }); refreshQueue(); } catch(e){}
 }
 
 loadCfg();
